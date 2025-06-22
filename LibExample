@@ -2,8 +2,53 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/thebi
 -- Custom Repository with the custom theme and mobile drag support
 local Window = Library.CreateLib("Nexusoritation", "Private")
 -- Private is a new theme with a Golden Yellow shade
-local Theme = Window:NewTab("Theme")
-local Section = Theme:NewSection("Section Name")
+local Tab = Window:NewTab("Funny and Useful")
+local Theme = Window:NewTab("Themes")
+local Section = Theme:NewSection("Scripts (skidded)")
+local themSection = Theme:NewSection("Change the theme like you want")
+Section:NewButton("Spawn a Gubby (Arkram)", "glub glub", function()
+    loadstring(game:HttpGet("https://pastebin.com/raw/Vs4J3jni"))()
+end)
+Section:NewButton("Ring Parts v6 by Lukas", "unanchored parts go vroom", function()
+loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-parts-V6-Open-source-No-chat-26899"))()
+end)
+Section:NewButton("Jerk Off", "go nuts", function()
+loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))("Spider Script")
+end)
+Section:NewButton("No Fall Damage", "lemme test the fall damage", function()
+local pid = game.PlaceId
+if pid ~= 189707 then
+    print("Error not found natural disasters survival game!")
+    return
+end
+local rs = game:GetService("RunService")
+local hb = rs.Heartbeat
+local rsd = rs.RenderStepped
+local lp = game.Players.LocalPlayer
+local z = Vector3.zero
+local function f(c)
+    local r = c:WaitForChild("HumanoidRootPart")
+    if r then
+        local con
+        con = hb:Connect(function()
+            if not r.Parent then
+                con:Disconnect()
+            end
+            local v = r.AssemblyLinearVelocity
+            r.AssemblyLinearVelocity = z
+            rsd:Wait()
+            r.AssemblyLinearVelocity = v
+        end)
+    end
+end
+f(lp.Character)
+lp.CharacterAdded:Connect(f)
+end)
+for theme, color in pairs(themes) do
+    themSection:NewColorPicker(theme, "Change your "..theme, color, function(color3)
+        Library:ChangeColor(theme, color3)
+    end)
+end
 
 -- The script on the bottom is for the toggle button for mobile users!
 local ScreenGui = Instance.new("ScreenGui")
