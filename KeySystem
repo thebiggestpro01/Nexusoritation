@@ -1,0 +1,55 @@
+local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/thebiggestpro01/Nexusoritation/refs/heads/main/KNOLib2"))()
+
+local Window = Library.CreateLib("Nexusoritation - Key System", "Private")
+
+local KeyTab = Window:NewTab("Key")
+local KeySection = KeyTab:NewSection("Enter your key")
+
+local CorrectKey = "aerf0-FEASG9HG89VUJnexus8908900ASE980F" -- Change this to your actual key
+local KeyLink = "https://rkns.link/cun63" -- Replace with your actual key link
+local ScriptURL = "https://raw.githubusercontent.com/thebiggestpro01/Nexusoritation/refs/heads/main/LibExample" -- Replace with your script URL
+
+local UserInput = ""
+
+KeySection:NewTextBox("Put key here.", "Enter your key to proceed", function(txt)
+    UserInput = txt
+end)
+
+KeySection:NewButton("Check Key", "Verify your key", function()
+    if UserInput == CorrectKey then
+        Library:ToggleUI() -- Hides UI if key is correct
+        print("Access Granted")
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Access Granted",
+            Text = "Hello! The key is correct.",
+            Duration = 3
+        })
+        
+        local success, err = pcall(function()
+            loadstring(game:HttpGet(ScriptURL))()
+        end)
+        
+        if success then
+            print("Script executed successfully!")
+        else
+            print("Error executing script: "..err)
+        end
+    else
+        print("Incorrect key! Try again.")
+        game:GetService("StarterGui"):SetCore("SendNotification", {
+            Title = "Incorrect Key",
+            Text = "The key you entered is incorrect. Try again!",
+            Duration = 3
+        })
+    end
+end)
+
+KeySection:NewButton("Copy Key Link", "Copies the key link to your clipboard", function()
+    setclipboard(https://rkns.link/6q1g1)
+    print("Key link copied to clipboard: " .. KeyLink)
+    game:GetService("StarterGui"):SetCore("SendNotification", {
+        Title = "Key link copied!",
+        Text = "The key link has been copied to your clipboard.",
+        Duration = 3
+    })
+end)
