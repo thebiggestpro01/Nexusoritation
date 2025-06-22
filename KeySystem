@@ -21,7 +21,7 @@ KeySection:NewButton("Check Key", "Verify your key", function()
         print("Access Granted")
         game:GetService("StarterGui"):SetCore("SendNotification", {
             Title = "Access Granted",
-            Text = "Hello! The key is correct.",
+            Text = "The key is correct! Loading Nexusoritation...",
             Duration = 3
         })
         
@@ -45,7 +45,7 @@ KeySection:NewButton("Check Key", "Verify your key", function()
 end)
 
 KeySection:NewButton("Copy Key Link", "Copies the key link to your clipboard", function()
-    setclipboard(https://rkns.link/6q1g1)
+    setclipboard(KeyLink)
     print("Key link copied to clipboard: " .. KeyLink)
     game:GetService("StarterGui"):SetCore("SendNotification", {
         Title = "Key link copied!",
