@@ -2,6 +2,17 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/thebi
 -- Custom Repository with the custom theme and mobile drag support
 local Window = Library.CreateLib("Nexusoritation", "Private")
 -- Private is a new theme with a Golden Yellow shade
+local function notif(txt, dur)
+	StarterGui:SetCore("SendNotification", {
+		Title = "Nexusoritation",
+		Text = txt,
+		Duration = dur or 3
+	})
+end
+--notif("text") to notify something
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
 local playerName = game.Players.LocalPlayer.Name
 local userId = game.Players.LocalPlayer.UserId
 local function flingPlayer(targetPlayer)
@@ -79,19 +90,185 @@ for _, sound in next, workspace:GetDescendants() do
    end
 end
 end)
-FSection:NewTextBox("Player", "Choose the player to fling!!", function(seledplr)
-print("player selected, flinging")
-	local targetName = (seledplr)
-	local targetPlayers = findPlayers(targetName)
+FSection:NewButton("Fling GUI", "Fling player", function(shit)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local StarterGui = game:GetService("StarterGui")
+local lp = Players.LocalPlayer
 
-	if #targetPlayers > 0 then
-		for _, player in pairs(targetPlayers) do
-			flingPlayer(player)
+-- Utils
+local function notif(txt, dur)
+	StarterGui:SetCore("SendNotification", {
+		Title = "Yeet GUI",
+		Text = txt,
+		Duration = dur or 3
+	})
+end
+
+local function gplr(txt)
+	local results = {}
+	txt = txt:lower()
+	for _, p in pairs(Players:GetPlayers()) do
+		if txt == "all" then
+			table.insert(results, p)
+		elseif txt == "others" and p ~= lp then
+			table.insert(results, p)
+		elseif txt == "me" and p == lp then
+			table.insert(results, p)
+		elseif p.Name:lower():sub(1, #txt) == txt then
+			table.insert(results, p)
 		end
-		print("fling successfull")
-	else
-		print("invalid player")
 	end
+	return results
+end
+
+-- Yeet logic
+local yeetLog = {}
+local isYeeting = false
+local originalCFrame = nil
+local thrust = nil
+
+local function startYeet(target)
+	if not target or not target.Character or not target.Character:FindFirstChild("HumanoidRootPart") then
+		notif("Invalid target", 2)
+		return
+	end
+	originalCFrame = lp.Character.HumanoidRootPart.CFrame
+	isYeeting = true
+	table.insert(yeetLog, target.Name)
+
+	thrust = Instance.new("BodyThrust", lp.Character.HumanoidRootPart)
+	thrust.Force = Vector3.new(9999,9999,9999)
+	thrust.Name = "YeetForce"
+
+	repeat
+		if not isYeeting then break end
+		lp.Character.HumanoidRootPart.CFrame = target.Character.HumanoidRootPart.CFrame
+		thrust.Location = target.Character.HumanoidRootPart.Position
+		RunService.Heartbeat:Wait()
+	until not target.Character:FindFirstChild("Head")
+end
+
+local function stopYeet()
+	isYeeting = false
+	if thrust then thrust:Destroy() end
+	if originalCFrame then
+		lp.Character.HumanoidRootPart.CFrame = originalCFrame
+	end
+	notif("Yeeting stopped", 3)
+end
+
+-- UI
+local gui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+gui.Name = "MobileYeetGui"
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0.9, 0, 0.6, 0)
+frame.Position = UDim2.new(0.05, 0, 0.2, 0)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1, 0, 0.15, 0)
+title.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+title.Text = "ðŸ¤– FE Yeet GUI (Mobile)"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.SourceSansBold
+title.TextScaled = true
+
+local textbox = Instance.new("TextBox", frame)
+textbox.PlaceholderText = "Username / all / others / random"
+textbox.Text = ""
+textbox.Size = UDim2.new(0.95, 0, 0.15, 0)
+textbox.Position = UDim2.new(0.025, 0, 0.18, 0)
+textbox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+textbox.TextColor3 = Color3.fromRGB(255, 255, 255)
+textbox.Font = Enum.Font.SourceSans
+textbox.TextScaled = true
+
+local flingBtn = Instance.new("TextButton", frame)
+flingBtn.Text = "FLING!"
+flingBtn.Size = UDim2.new(0.95, 0, 0.13, 0)
+flingBtn.Position = UDim2.new(0.025, 0, 0.35, 0)
+flingBtn.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+flingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+flingBtn.Font = Enum.Font.SourceSansBold
+flingBtn.TextScaled = true
+
+local stopBtn = Instance.new("TextButton", frame)
+stopBtn.Text = "STOP"
+stopBtn.Size = UDim2.new(0.95, 0, 0.13, 0)
+stopBtn.Position = UDim2.new(0.025, 0, 0.5, 0)
+stopBtn.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+stopBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+stopBtn.Font = Enum.Font.SourceSansBold
+stopBtn.TextScaled = true
+
+local randomBtn = Instance.new("TextButton", frame)
+randomBtn.Text = "ðŸŽ² Random Target"
+randomBtn.Size = UDim2.new(0.95, 0, 0.13, 0)
+randomBtn.Position = UDim2.new(0.025, 0, 0.65, 0)
+randomBtn.BackgroundColor3 = Color3.fromRGB(100, 149, 237)
+randomBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+randomBtn.Font = Enum.Font.SourceSansBold
+randomBtn.TextScaled = true
+
+local logBtn = Instance.new("TextButton", frame)
+logBtn.Text = "ðŸ“ƒ View Yeet Log"
+logBtn.Size = UDim2.new(0.95, 0, 0.13, 0)
+logBtn.Position = UDim2.new(0.025, 0, 0.80, 0)
+logBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+logBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+logBtn.Font = Enum.Font.SourceSansBold
+logBtn.TextScaled = true
+
+-- Button Actions
+flingBtn.MouseButton1Click:Connect(function()
+	local txt = textbox.Text:lower()
+	local targets
+	if txt == "random" then
+		local others = {}
+		for _, v in pairs(Players:GetPlayers()) do
+			if v ~= lp then table.insert(others, v) end
+		end
+		if #others > 0 then
+			local rand = others[math.random(1, #others)]
+			startYeet(rand)
+		end
+	else
+		targets = gplr(txt)
+		if #targets > 0 then
+			startYeet(targets[1])
+		else
+			notif("No valid player", 2)
+		end
+	end
+end)
+
+stopBtn.MouseButton1Click:Connect(stopYeet)
+
+randomBtn.MouseButton1Click:Connect(function()
+	local pool = {}
+	for _, v in pairs(Players:GetPlayers()) do
+		if v ~= lp then
+			table.insert(pool, v)
+		end
+	end
+	if #pool > 0 then
+		local choice = pool[math.random(1, #pool)]
+		textbox.Text = choice.Name
+	end
+end)
+
+logBtn.MouseButton1Click:Connect(function()
+	local names = table.concat(yeetLog, ", ")
+	notif("Yeeted: " .. (names == "" and "none yet" or names), 5)
+end)
+
+notif("Yeet GUI (Mobile) Loaded!", 4)
 end)
 -- The script on the bottom is for the toggle button for mobile users!
 local ScreenGui = Instance.new("ScreenGui")
