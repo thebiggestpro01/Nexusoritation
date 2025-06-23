@@ -2,31 +2,35 @@ local Library = loadstring(game:HttpGet("https://raw.githubusercontent.com/thebi
 -- Custom Repository with the custom theme and mobile drag support
 local Window = Library.CreateLib("Nexusoritation", "Private")
 -- Private is a new theme with a Golden Yellow shade
-local Hi = Window:NewTab("Welcome!")
-local Tab = Window:NewTab("Funny and Useful")
-local Theme = Window:NewTab("Themes")
-local function notif(str,dur)
-	game:FindService("StarterGui"):SetCore("SendNotification", {
-		Title = "Nexusoritation",
-		Text = str,
-		Icon = "rbxassetid://2005276185",
-		Duration = dur or 3
-	})
+local playerName = game.Players.LocalPlayer.Name
+local userId = game.Players.LocalPlayer.UserId
+local function flingPlayer(targetPlayer)
+	if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local Thrust = Instance.new('BodyThrust', targetPlayer.Character.HumanoidRootPart)
+		Thrust.Force = Vector3.new(0, 10000, 0)
+		wait(0.1)
+		Thrust:Destroy()
+	end
 end
-local Welcome = Hi:NewSection("Welcome, " .. players.LocalPlayer.DisplayName;)
-local UID = Hi:NewSection("Your UserID is " .. players.LocalPlayer.UserId)
+local Hi = Window:NewTab("Welcome!")
+local Welcome = Hi:NewSection("Welcome to Nexusoritation, " .. playerName)
+local Hello = Hi:NewSection("Your User ID is: " .. userId)
+Hello:NewButton("Copy UserID", "Copies LocalPlayer's ID to clipboard", function()
+    toclipboard(userId)
+end)
+local Tab = Window:NewTab("Universal")
 local Section = Tab:NewSection("Universal")
 local FSection = Tab:NewSection("Fling")
 local Ntab = Window:NewTab("NDS")
-local NDSec = Tab:NewSection("NDS Script")
-local UNDSec = Tab:NewSection("Universal")
+local NDSec = Ntab:NewSection("NDS Script")
+local UNDSec = Ntab:NewSection("Universal")
 NDSec:NewButton("Ring Parts v6 by Lukas", "unanchored parts go vroom", function()
 loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-parts-V6-Open-source-No-chat-26899"))()
 end)
 NDSec:NewButton("No Fall Damage", "lemme test the fall damage", function()
 local pid = game.PlaceId
 if pid ~= 189707 then
-    notif("Error: Not on Natural Disaster Survival!", 2)
+    print("not on nds")
     return
 end
 local rs = game:GetService("RunService")
@@ -76,25 +80,18 @@ for _, sound in next, workspace:GetDescendants() do
 end
 end)
 FSection:NewTextBox("Player", "Choose the player to fling!!", function(seledplr)
-notif("Selected User: " .. seledplr)
-end)
-FSection:NewButton("Fling Player", "Flings the seled player", function()
-local Target = gplr(seledplr)
-	if Target[1] then
-		Target = Target[1]
-		
-		local Thrust = Instance.new('BodyThrust', lp.Character.HumanoidRootPart)
-		Thrust.Force = Vector3.new(9999,9999,9999)
-		Thrust.Name = "YeetForce"
-		repeat
-			lp.Character.HumanoidRootPart.CFrame = Target.Character.HumanoidRootPart.CFrame
-			Thrust.Location = Target.Character.HumanoidRootPart.Position
-			game:FindService("RunService").Heartbeat:wait()
-		until not Target.Character:FindFirstChild("Head")
+print("player selected, flinging")
+	local targetName = (seledplr)
+	local targetPlayers = findPlayers(targetName)
+
+	if #targetPlayers > 0 then
+		for _, player in pairs(targetPlayers) do
+			flingPlayer(player)
+		end
+		print("fling successfull")
 	else
-		notif("Invalid player")
+		print("invalid player")
 	end
-end)
 end)
 -- The script on the bottom is for the toggle button for mobile users!
 local ScreenGui = Instance.new("ScreenGui")
@@ -120,5 +117,3 @@ end)
 local Corner = Instance.new("UICorner")
 Corner.Name = "Corner"
 Corner.Parent = Toggle
-
-notif("Loaded successfully! Enjoy this script!")
