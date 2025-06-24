@@ -229,7 +229,18 @@ RunService.RenderStepped:Connect(function()
                 local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
 
                 if onScreen then
-                    local size = Vector2.new(50, 100) -- Box size
+                    local rootPos = hrp.Position
+local headPos = head.Position
+local top, bottom = headPos.Y + 1, hrp.Position.Y - 2
+
+local width3D = 2 -- approximate width of avatar
+local top2D = Camera:WorldToViewportPoint(Vector3.new(rootPos.X, top, rootPos.Z))
+local bottom2D = Camera:WorldToViewportPoint(Vector3.new(rootPos.X, bottom, rootPos.Z))
+local height = math.abs(top2D.Y - bottom2D.Y)
+local width = height / 2 -- width is roughly half the height for Roblox avatars
+
+esp.box.Size = Vector2.new(width, height)
+esp.box.Position = Vector2.new(pos.X - width/2, pos.Y - height/2) -- Box size
                     esp.box.Size = size
                     esp.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
                     esp.box.Color = espColor
@@ -263,82 +274,95 @@ end)
 Players.PlayerRemoving:Connect(removeESP)
 
 local FSection = Tab:NewSection("Fling")
-local selectedPlayerDisplay = nil
+local selectedPlayer = nil
 local playerOptions = {}
 local playerMap = {}
-local dropdown -- will store the dropdown object for later updates
+local flingDropdown = nil
 
--- Helper to update dropdown options
-local function updatePlayerList()
-    local previousSelection = selectedPlayerDisplay
+-- Fling logic
+local function flingPlayer(target)
+    if not target or not target.Character then
+        notif("Invalid target", 2)
+        return
+    end
+
+    local character = target.Character
+    local rootPart = character:FindFirstChild("HumanoidRootPart") 
+                  or character:FindFirstChild("Torso") 
+                  or character:FindFirstChild("UpperTorso")
+
+    if not rootPart then
+        notif("Could not find root part", 2)
+        return
+    end
+
+    local thrust = Instance.new("BodyThrust")
+    thrust.Force = Vector3.new(0, 100000, 0)
+    thrust.Location = rootPart.Position
+    thrust.Parent = rootPart
+
+    task.wait(0.5)
+    thrust:Destroy()
+
+    notif("Flinged " .. target.Name, 2)
+end
+
+-- Update player dropdown
+local function updateFlingDropdown()
     playerOptions = {}
     playerMap = {}
 
     for _, player in ipairs(Players:GetPlayers()) do
         if player ~= Players.LocalPlayer then
-            local display = "@" .. player.Name .. " (" .. player.DisplayName .. ")"
-            table.insert(playerOptions, display)
-            playerMap[display] = player
+            local label = player.DisplayName .. " (@" .. player.Name .. ")"
+            table.insert(playerOptions, label)
+            playerMap[label] = player
         end
     end
 
-    if dropdown then
-        dropdown:Refresh(playerOptions, true)
-        if previousSelection and playerMap[previousSelection] then
-            dropdown:SetValue(previousSelection)
-            selectedPlayerDisplay = previousSelection
-        else
-            selectedPlayerDisplay = nil
-        end
+    if flingDropdown then
+        flingDropdown:Refresh(playerOptions, true)
     end
 end
 
--- Initial list setup
-updatePlayerList()
-
--- React to players joining/leaving
-Players.PlayerAdded:Connect(updatePlayerList)
-Players.PlayerRemoving:Connect(updatePlayerList)
-
--- Create dropdown with reference
-dropdown = FSection:NewDropdown("Choose player to fling", "Players on the server", playerOptions, function(selected)
-    selectedPlayerDisplay = selected
-    notif("Selected: " .. selected)
+-- Initialize dropdown
+flingDropdown = FSection:NewDropdown("Select Player", "Pick a player to fling", playerOptions, function(selected)
+    selectedPlayer = playerMap[selected]
+    notif("Selected: " .. (selectedPlayer and selectedPlayer.Name or "None"))
 end)
 
--- Button to fling selected player
-FSection:NewButton("Fling Selected Player", "Flings the chosen player", function()
-    if not selectedPlayerDisplay then
+-- Buttons
+FSection:NewButton("Fling Selected Player", "Flings chosen player", function()
+    if not selectedPlayer then
         notif("No player selected!", 2)
         return
     end
-
-    local target = playerMap[selectedPlayerDisplay]
-    flingPlayer(target)
+    flingPlayer(selectedPlayer)
 end)
-FSection:NewButton("Fling Random Player", "Flings a random player in the game", function()
-    local players = game:GetService("Players"):GetPlayers()
-    local localPlayer = game.Players.LocalPlayer
 
-    -- Filter out the local player so you don't fling yourself
-    local validPlayers = {}
-    for _, player in ipairs(players) do
-        if player ~= localPlayer and player.Character then
-            table.insert(validPlayers, player)
+FSection:NewButton("Fling Random Player", "Flings a random player", function()
+    local candidates = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= Players.LocalPlayer and p.Character then
+            table.insert(candidates, p)
         end
     end
 
-    if #validPlayers == 0 then
+    if #candidates == 0 then
         notif("No valid players to fling!", 2)
         return
     end
 
-    -- Choose a random player
-    local randomPlayer = validPlayers[math.random(1, #validPlayers)]
-
-    -- Call the fling function
+    local randomPlayer = candidates[math.random(#candidates)]
     flingPlayer(randomPlayer)
 end)
+
+-- Update dropdown on player join/leave
+Players.PlayerAdded:Connect(updateFlingDropdown)
+Players.PlayerRemoving:Connect(updateFlingDropdown)
+
+-- Initial population
+updateFlingDropdown()
 
 -- NDS tab and sections
 local Ntab = Window:NewTab("NDS")
