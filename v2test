@@ -1,5 +1,3 @@
--- Using this before changing the actual UI script itself to the new version (v2)
-
 -- Universal Executor Detection
 local function getExecutorName()
     -- Priority to accurate built-in identifiers
@@ -56,6 +54,45 @@ end
 local executorName = getExecutorName()
 print("Executor detected:", executorName)
 
+local StarterGui = game:GetService("StarterGui")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+-- Notification helper
+local function notif(txt, dur)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Nexusoritation",
+        Text = txt,
+        Duration = dur or 3
+    })
+end
+local function flingPlayer(target)
+    if not target or not target.Character then
+        notif("Invalid target", 2)
+        return
+    end
+
+    local character = target.Character
+    local rootPart = character:FindFirstChild("HumanoidRootPart") 
+                    or character:FindFirstChild("Torso") 
+                    or character:FindFirstChild("UpperTorso")
+
+    if not rootPart then
+        notif("Could not find torso/root part", 2)
+        return
+    end
+
+    local thrust = Instance.new("BodyThrust")
+    thrust.Force = Vector3.new(0, 100000, 0)
+    thrust.Location = rootPart.Position
+    thrust.Parent = rootPart
+
+    wait(0.5)
+
+    thrust:Destroy()
+    notif("Flinged " .. target.Name, 2)
+end
+
 -- Load the library first with error handling
 local success, Library = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/thebiggestpro01/Nexusoritation/refs/heads/main/KNOLib2"))()
@@ -85,14 +122,6 @@ local StarterGui = game:GetService("StarterGui")
 local playerName = Players.LocalPlayer.Name
 local userId = Players.LocalPlayer.UserId
 
--- Notification helper
-local function notif(txt, dur)
-    StarterGui:SetCore("SendNotification", {
-        Title = "Nexusoritation",
-        Text = txt,
-        Duration = dur or 3
-    })
-end
 -- Filepath to save selected theme
 local themeSaveFile = "NexusoritationTheme.txt"
 
@@ -136,73 +165,102 @@ end)
 local Tab = Window:NewTab("Universal")
 local Section = Tab:NewSection("Universal")
 local ESpection = Tab:NewSection("ESP")
--- Variables
+-- ✅ ENHANCED ESP SYSTEM
+local localPlayer = Players.LocalPlayer
 local espEnabled = false
+local espColor = Color3.new(1, 0, 0) -- default red
 local espObjects = {}
-local espFolder = Instance.new("Folder")
-espFolder.Name = "ESP"
-espFolder.Parent = game.CoreGui
 
--- ESP Functions
-local function createESPForPlayer(player)
-    if espObjects[player] or player == localPlayer then return end
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+-- Drawings
+local Camera = workspace.CurrentCamera
 
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESPGui"
-    billboard.Adornee = character.HumanoidRootPart
-    billboard.Size = UDim2.new(0, 100, 0, 40)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = espFolder
+-- Helper: Create ESP drawings
+local function createESP(player)
+    if player == localPlayer or espObjects[player] then return end
 
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Size = UDim2.new(1, 0, 1, 0)
-    nameLabel.BackgroundTransparency = 1
-    nameLabel.TextColor3 = Color3.new(1, 0, 0)
-    nameLabel.TextStrokeTransparency = 0
-    nameLabel.Font = Enum.Font.SourceSansBold
-    nameLabel.TextSize = 14
-    nameLabel.Text = player.Name
-    nameLabel.Parent = billboard
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Filled = false
+    box.Visible = false
 
-    espObjects[player] = billboard
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Center = true
+    nameTag.Outline = true
+    nameTag.Visible = false
+
+    espObjects[player] = {box = box, name = nameTag}
 end
 
-local function removeESPForPlayer(player)
-    if espObjects[player] then
-        espObjects[player]:Destroy()
+-- Remove ESP drawings
+local function removeESP(player)
+    local esp = espObjects[player]
+    if esp then
+        esp.box:Remove()
+        esp.name:Remove()
         espObjects[player] = nil
     end
 end
 
+-- Toggle ESP for all
 local function updateESP()
-    for _, player in pairs(Players:GetPlayers()) do
-        if espEnabled and player ~= localPlayer then
-            if not espObjects[player] then
-                createESPForPlayer(player)
-            end
+    for _, player in ipairs(Players:GetPlayers()) do
+        if espEnabled then
+            createESP(player)
         else
-            removeESPForPlayer(player)
+            removeESP(player)
         end
     end
 end
 
--- Connections
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        if espEnabled then
-            createESPForPlayer(player)
+-- Real-time ESP update
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+
+    for player, esp in pairs(espObjects) do
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+
+        if character and hrp then
+            local head = character:FindFirstChild("Head")
+            local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+
+            if head and torso then
+                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+
+                if onScreen then
+                    local size = Vector2.new(50, 100) -- Box size
+                    esp.box.Size = size
+                    esp.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+                    esp.box.Color = espColor
+                    esp.box.Visible = true
+
+                    esp.name.Text = player.DisplayName .. " (" .. player.Name .. ")"
+                    esp.name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
+                    esp.name.Color = espColor
+                    esp.name.Visible = true
+                else
+                    esp.box.Visible = false
+                    esp.name.Visible = false
+                end
+            end
+        else
+            esp.box.Visible = false
+            esp.name.Visible = false
         end
-    end)
-    if espEnabled and player.Character then
-        createESPForPlayer(player)
     end
 end)
 
-Players.PlayerRemoving:Connect(function(player)
-    removeESPForPlayer(player)
+-- Event handling
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            createESP(player)
+        end
+    end)
 end)
+
+Players.PlayerRemoving:Connect(removeESP)
 
 local FSection = Tab:NewSection("Fling")
 local selectedPlayerDisplay = nil
@@ -256,44 +314,30 @@ FSection:NewButton("Fling Selected Player", "Flings the chosen player", function
     end
 
     local target = playerMap[selectedPlayerDisplay]
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        local root = target.Character.HumanoidRootPart
-        local thrust = Instance.new("BodyThrust")
-        thrust.Force = Vector3.new(0, 100000, 0)
-        thrust.Location = root.Position
-        thrust.Parent = root
-
-        wait(0.5)
-        thrust:Destroy()
-        notif("Flinged " .. target.Name, 2)
-    else
-        notif("Invalid target.", 2)
-    end
+    flingPlayer(target)
 end)
-FSection:NewButton("Fling Random Player", "Selects and flings a random player", function()
-    if #playerOptions == 0 then
-        notif("No other players to fling!", 2)
+FSection:NewButton("Fling Random Player", "Flings a random player in the game", function()
+    local players = game:GetService("Players"):GetPlayers()
+    local localPlayer = game.Players.LocalPlayer
+
+    -- Filter out the local player so you don't fling yourself
+    local validPlayers = {}
+    for _, player in ipairs(players) do
+        if player ~= localPlayer and player.Character then
+            table.insert(validPlayers, player)
+        end
+    end
+
+    if #validPlayers == 0 then
+        notif("No valid players to fling!", 2)
         return
     end
 
-    local randomDisplay = playerOptions[math.random(1, #playerOptions)]
-    local target = playerMap[randomDisplay]
-    if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
-        selectedPlayerDisplay = randomDisplay
-        dropdown:SetValue(randomDisplay)
+    -- Choose a random player
+    local randomPlayer = validPlayers[math.random(1, #validPlayers)]
 
-        local root = target.Character.HumanoidRootPart
-        local thrust = Instance.new("BodyThrust")
-        thrust.Force = Vector3.new(0, 100000, 0)
-        thrust.Location = root.Position
-        thrust.Parent = root
-
-        wait(0.5)
-        thrust:Destroy()
-        notif("Flinged random player: " .. target.Name, 2)
-    else
-        notif("Invalid target.", 2)
-    end
+    -- Call the fling function
+    flingPlayer(randomPlayer)
 end)
 
 -- NDS tab and sections
@@ -302,11 +346,8 @@ local NDSec = Ntab:NewSection("NDS Script")
 local UNDSec = Ntab:NewSection("Universal")
 
 -- Create buttons in Universal Section (test button)
-Section:NewLabel("Label to detect errors")
-
--- Another button in NDS section (test button)
-NDSec:NewLabel("Another label to detect errors")
-
+print("Testing for errors, if it says UI created successfully, everything worked.")
+print("Testing for errors, if it says UI created successfully, everything worked.")
 -- Error handling during button creation
 local success, err = pcall(function()
     notif("UI created successfully", 3)
@@ -376,15 +417,13 @@ for _, sound in next, workspace:GetDescendants() do
    end
 end
 end)
+ESpection:NewColorPicker("ESP Color", "Pick color for ESP boxes and names", espColor, function(color)
+    espColor = color
+end)
+
 ESpection:NewToggle("ESP", false, function(value)
     espEnabled = value
-    if not espEnabled then
-        for player, _ in pairs(espObjects) do
-            removeESPForPlayer(player)
-        end
-    else
-        updateESP()
-    end
+    updateESP()
 end)
 -- The script on the bottom is for the toggle button for mobile users!
 local ScreenGui = Instance.new("ScreenGui")
@@ -584,14 +623,3 @@ end)
 ThemesSection:NewButton("SunsetOrange", "Apply Sunset Orange Theme", function()
     applyTheme("SunsetOrange")
 end)
-
-  notif("Nexusoritation v2 has been loaded succesfully!")
-    local UserInputService = game:GetService("UserInputService")
-
-if UserInputService.TouchEnabled then
-    -- Customize UI or controls for mobile
-      notif("You are using a phone/tablet, to toggle the UI, please press the Nexus button")
-else
-    -- Customize UI or controls for PC
-      notif("You are using a PC, to toggle the UI, press the key F or change the key in Settings.")
-end
