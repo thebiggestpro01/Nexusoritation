@@ -1,0 +1,572 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local localPlayer = Players.LocalPlayer
+
+-- Universal Executor Detection
+local function getExecutorName()
+    -- Priority to accurate built-in identifiers
+    if identifyexecutor then
+        return identifyexecutor()
+    elseif syn then
+        return "Synapse X"
+    elseif is_sirhurt_closure or sirhurt then
+        return "SirHurt"
+    elseif KRNL_LOADED or krnl then
+        return "KRNL"
+    elseif fluxus or isFluxus then
+        return "Fluxus"
+    elseif PROTOSMASHER_LOADED or protossmasher then
+        return "ProtoSmasher"
+    elseif secure_load or sentinel then
+        return "Sentinel"
+    elseif wrapfunction or is_scriptware or sw then
+        return "Script-Ware"
+    elseif hydrogen or isHydrogen then
+        return "Hydrogen"
+    elseif oxygen or isOxygen then
+        return "Oxygen U"
+    elseif getexecutorname and type(getexecutorname) == "function" then
+        return getexecutorname()
+    elseif solara or isSolara then
+        return "Solara"
+    elseif jjsploit or isJJSploit then
+        return "JJSploit"
+    elseif xeno or isXeno then
+        return "Xeno"
+    elseif comet or Comet then
+        return "Comet"
+    elseif electron or Electron then
+        return "Electron"
+    elseif Wave or isWave then
+        return "Wave"
+    elseif Arceus or isArceusX or get_hidden_gui or (syn == nil and isfolder and not writefile and not readfile) then
+        return "Arceus X"
+    elseif heploit or Helix then
+        return "Helix"
+    elseif Shadow or isShadow then
+        return "Shadow"
+    elseif Delta or isDelta then
+        return "Delta"
+    elseif easyexploits or isEasyExploits then
+        return "EasyExploits"
+    else
+        return "Unknown Executor"
+    end
+end
+
+-- Example usage
+local executorName = getExecutorName()
+print("Executor detected:", executorName)
+
+-- Notification helper
+local function notif(txt, dur)
+    StarterGui:SetCore("SendNotification", {
+        Title = "Nexusoritation",
+        Text = txt,
+        Duration = dur or 3
+    })
+end
+local function flingPlayer(target)
+    if not target or not target.Character then
+        notif("Invalid target", 2)
+        return
+    end
+    local character = target.Character
+    local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
+    if not rootPart then
+        notif("Could not find torso/root part", 2)
+        return
+    end
+    local thrust = Instance.new("BodyThrust")
+    thrust.Force = Vector3.new(0, 100000, 0)
+    thrust.Location = rootPart.Position
+    thrust.Parent = rootPart
+    wait(0.5)
+    thrust:Destroy()
+    notif("Flinged " .. target.Name, 2)
+end
+local localPlayer = Players.LocalPlayer
+-- ESP Core
+local espEnabled = false
+local espColor = Color3.new(1, 0, 0)
+local espObjects = {}
+
+local function createESP(player)
+    if player == Players.LocalPlayer or espObjects[player] then return end
+    local box = Drawing.new("Square")
+    box.Thickness = 2; box.Filled = false; box.Color = espColor; box.Visible = false
+
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16; nameTag.Center = true; nameTag.Outline = true; nameTag.Color = espColor; nameTag.Visible = false
+
+    espObjects[player] = {box = box, name = nameTag}
+end
+
+local function removeESP(player)
+    local e = espObjects[player]
+    if e then e.box:Remove(); e.name:Remove(); espObjects[player] = nil end
+end
+
+local function updateESPColors(c)
+    espColor = c
+    for _, e in pairs(espObjects) do
+        e.box.Color = c
+        e.name.Color = c
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+    for plr, e in pairs(espObjects) do
+        local char = plr.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos, on = Camera:WorldToViewportPoint(hrp.Position)
+            if on then
+                local size = Vector2.new(50,100)
+                e.box.Size = size
+                e.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+                e.box.Visible = true
+
+                e.name.Text = plr.Name
+                e.name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
+                e.name.Visible = true
+            else
+                e.box.Visible = false
+                e.name.Visible = false
+            end
+        else
+            e.box.Visible = false
+            e.name.Visible = false
+        end
+    end
+end)
+
+Players.PlayerAdded:Connect(function(plr)
+    plr.CharacterAdded:Connect(function()
+        wait(1)
+        if espEnabled then createESP(plr) end
+    end)
+end)
+
+Players.PlayerRemoving:Connect(removeESP)
+
+for _, plr in ipairs(Players:GetPlayers()) do
+    if plr ~= Players.LocalPlayer and espEnabled then
+        createESP(plr)
+    end
+end
+
+-- Load the library first with error handling
+local success, Library = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/thebiggestpro01/Nexusoritation/refs/heads/main/KNOLib2"))()
+end)
+
+if not success or not Library then
+    notif("Failed to load library!", 3)
+    return
+end
+
+-- Define the colors for the themes
+local colors = {
+    SchemeColor = Color3.fromRGB(255, 215, 0),
+        Background = Color3.fromRGB(31, 41, 43),
+        Header = Color3.fromRGB(22, 29, 31),
+        TextColor = Color3.fromRGB(255,255,255),
+        ElementColor = Color3.fromRGB(22, 29, 31)
+}
+
+-- Create the main window with the colors defined above
+local Window = Library.CreateLib("Nexusoritation - " .. executorName, colors)
+
+-- Define all themes with preset color values
+-- Services after window creation
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local playerName = Players.LocalPlayer.Name
+local userId = Players.LocalPlayer.UserId
+
+-- Filepath to save selected theme
+local themeSaveFile = "NexusoritationTheme.txt"
+
+-- Function to save theme choice
+local function saveTheme(themeName)
+    if writefile then
+        writefile(themeSaveFile, themeName)
+    elseif pcall(function() setclipboard(themeName) end) then
+        -- fallback if no writefile, copy to clipboard
+    end
+end
+
+-- Function to load saved theme choice
+local function loadSavedTheme()
+    if isfile and isfile(themeSaveFile) then
+        local savedTheme = readfile(themeSaveFile)
+        if themes[savedTheme] then -- check if the theme exists
+            return savedTheme
+        end
+    end
+    return "Private"  -- Default theme if none saved or invalid theme
+end
+-- Load the theme settings after the UI is created (with a short delay)
+delay(0.5, function()
+    local savedTheme = loadSavedTheme()
+    Library:ChangeColor(themes[savedTheme])  -- Apply the saved theme
+    themeDropdown:SetValue(savedTheme)  -- Set the value in dropdown
+    notif("Loaded theme: " .. savedTheme)
+end)
+
+-- Welcome tab & sections
+local Hi = Window:NewTab("Welcome!")
+local Welcome = Hi:NewSection("Welcome to Nexusoritation, " .. playerName)
+local Hello = Hi:NewSection("Your User ID is: " .. userId)
+Hello:NewButton("Copy UserID", "Copies LocalPlayer's ID to clipboard", function()
+    toclipboard(tostring(userId))
+    notif("UserID copied to clipboard!")
+end)
+
+-- Universal tab & sections
+local Tab = Window:NewTab("Universal")
+local Section = Tab:NewSection("Universal")
+local ESpection = Tab:NewSection("ESP")
+
+local FSection = Tab:NewSection("Fling")
+local selectedPlayer = nil
+local playerOptions = {}
+local playerMap = {}
+local flingDropdown = nil
+
+-- Fling logic
+local function flingPlayer(target)
+    if not target or not target.Character then
+        notif("Invalid target", 2)
+        return
+    end
+
+    local character = target.Character
+    local rootPart = character:FindFirstChild("HumanoidRootPart") 
+                  or character:FindFirstChild("Torso") 
+                  or character:FindFirstChild("UpperTorso")
+
+    if not rootPart then
+        notif("Could not find root part", 2)
+        return
+    end
+
+    local thrust = Instance.new("BodyThrust")
+    thrust.Force = Vector3.new(0, 100000, 0)
+    thrust.Location = rootPart.Position
+    thrust.Parent = rootPart
+
+    task.wait(0.5)
+    thrust:Destroy()
+
+    notif("Flinged " .. target.Name, 2)
+end
+
+-- Update player dropdown
+local function updateFlingDropdown()
+    playerOptions = {}
+    playerMap = {}
+
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= Players.LocalPlayer then
+            local label = player.DisplayName .. " (@" .. player.Name .. ")"
+            table.insert(playerOptions, label)
+            playerMap[label] = player
+        end
+    end
+
+    if flingDropdown then
+        flingDropdown:Refresh(playerOptions, true)
+    end
+end
+
+-- Initialize dropdown
+flingDropdown = FSection:NewDropdown("Select Player", "Pick a player to fling", playerOptions, function(selected)
+    selectedPlayer = playerMap[selected]
+    notif("Selected: " .. (selectedPlayer and selectedPlayer.Name or "None"))
+end)
+
+-- Buttons
+FSection:NewButton("Fling Selected Player", "Fling the player you selected", function()
+    if selectedPlayer then
+    flingPlayer(selectedPlayer)
+else
+    notif("No player selected.", 2)
+end
+end)
+
+FSection:NewButton("Fling Random Player", "Flings a random player", function()
+    local candidates = {}
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= Players.LocalPlayer and p.Character then
+            table.insert(candidates, p)
+        end
+    end
+
+    if #candidates == 0 then
+        notif("No valid players to fling!", 2)
+        return
+    end
+
+    local randomPlayer = candidates[math.random(#candidates)]
+    flingPlayer(randomPlayer)
+end)
+
+-- Update dropdown on player join/leave
+Players.PlayerAdded:Connect(updateFlingDropdown)
+Players.PlayerRemoving:Connect(updateFlingDropdown)
+
+-- Initial population
+updateFlingDropdown()
+
+-- NDS tab and sections
+local Ntab = Window:NewTab("NDS")
+local NDSec = Ntab:NewSection("NDS Script")
+local UNDSec = Ntab:NewSection("Universal")
+
+-- Create buttons in Universal Section (test button)
+print("Testing for errors, if it says UI created successfully, everything worked.")
+print("Testing for errors, if it says UI created successfully, everything worked.")
+-- Error handling during button creation
+local success, err = pcall(function()
+    notif("UI created successfully", 3)
+end)
+
+if not success then
+    notif("Error creating UI: " .. err, 5)
+end
+-- Example for NDSec buttons:
+NDSec:NewButton("Ring Parts v6 by Lukas", "unanchored parts go vroom", function()
+    loadstring(game:HttpGet("https://rawscripts.net/raw/Universal-Script-Super-ring-parts-V6-Open-source-No-chat-26899"))()
+end)
+NDSec:NewButton("No Fall Damage", "lemme test the fall damage", function()
+local pid = game.PlaceId
+if pid ~= 189707 then
+    print("not on nds")
+    return
+end
+local rs = game:GetService("RunService")
+local hb = rs.Heartbeat
+local rsd = rs.RenderStepped
+local lp = game.Players.LocalPlayer
+local z = Vector3.zero
+local function f(c)
+    local r = c:WaitForChild("HumanoidRootPart")
+    if r then
+        local con
+        con = hb:Connect(function()
+            if not r.Parent then
+                con:Disconnect()
+            end
+            local v = r.AssemblyLinearVelocity
+            r.AssemblyLinearVelocity = z
+            rsd:Wait()
+            r.AssemblyLinearVelocity = v
+        end)
+    end
+end
+f(lp.Character)
+lp.CharacterAdded:Connect(f)
+end)
+Section:NewButton("Jerk Off", "go nuts", function()
+loadstring(game:HttpGet("https://pastefy.app/wa3v2Vgm/raw"))("Spider Script")
+end)
+Section:NewButton("Fly GUI", "ButtonInfo", function()
+loadstring("\108\111\97\100\115\116\114\105\110\103\40\103\97\109\101\58\72\116\116\112\71\101\116\40\40\39\104\116\116\112\115\58\47\47\103\105\115\116\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\109\101\111\122\111\110\101\89\84\47\98\102\48\51\55\100\102\102\57\102\48\97\55\48\48\49\55\51\48\52\100\100\100\54\55\102\100\99\100\51\55\48\47\114\97\119\47\101\49\52\101\55\52\102\52\50\53\98\48\54\48\100\102\53\50\51\51\52\51\99\102\51\48\98\55\56\55\48\55\52\101\98\51\99\53\100\50\47\97\114\99\101\117\115\37\50\53\50\48\120\37\50\53\50\48\102\108\121\37\50\53\50\48\50\37\50\53\50\48\111\98\102\108\117\99\97\116\111\114\39\41\44\116\114\117\101\41\41\40\41\10\10")()
+end)
+UNDSec:NewButton("Fly GUI", "ButtonInfo", function()
+loadstring("\108\111\97\100\115\116\114\105\110\103\40\103\97\109\101\58\72\116\116\112\71\101\116\40\40\39\104\116\116\112\115\58\47\47\103\105\115\116\46\103\105\116\104\117\98\117\115\101\114\99\111\110\116\101\110\116\46\99\111\109\47\109\101\111\122\111\110\101\89\84\47\98\102\48\51\55\100\102\102\57\102\48\97\55\48\48\49\55\51\48\52\100\100\100\54\55\102\100\99\100\51\55\48\47\114\97\119\47\101\49\52\101\55\52\102\52\50\53\98\48\54\48\100\102\53\50\51\51\52\51\99\102\51\48\98\55\56\55\48\55\52\101\98\51\99\53\100\50\47\97\114\99\101\117\115\37\50\53\50\48\120\37\50\53\50\48\102\108\121\37\50\53\50\48\50\37\50\53\50\48\111\98\102\108\117\99\97\116\111\114\39\41\44\116\114\117\101\41\41\40\41\10\10")()
+end)
+Section:NewButton("FE Grab (doesn't work on mobile)", "ButtonInfo", function()
+loadstring(game:HttpGet("https://pastebin.com/raw/Da2RAkmA"))()
+end)
+local ThemesTab = Window:NewTab("Settings")
+local KeySection = ThemesTab:NewSection("Set keybinds")
+KeySection:NewKeybind("Toggle UI Key", "Key used to toggle the UI", Enum.KeyCode.F, function()
+Library:ToggleUI()
+end)
+Section:NewButton("FE Earrape (doesnt work if RespectFE is on)", "blast yo ears", function()
+--// Doesn't work if RespectFilteringEnabled is enabled
+print(game:GetService("SoundService").RespectFilteringEnabled)
+
+--// Get's every sound instance in workspace and play's it (Earrape btw)
+for _, sound in next, workspace:GetDescendants() do
+   if sound:IsA("Sound") then
+       sound:Play()
+   end
+end
+end)
+ESpection:NewColorPicker("ESP Color", "Pick ESP color", espColor, function(c)
+    updateESPColors(c)
+end)
+
+ESpection:NewToggle("Toggle ESP", "Enable/disable ESP", function(state)
+    espEnabled = state
+    if state then
+        for _, plr in pairs(Players:GetPlayers()) do
+            if plr ~= Players.LocalPlayer then
+                createESP(plr)
+            end
+        end
+    else
+for _, e in pairs(espObjects) do
+        e.box.Visible = false
+        e.name.Visible = false
+    end
+end
+end)
+-- The script on the bottom is for the toggle button for mobile users!
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "ScreenGui"
+ScreenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+ScreenGui.ResetOnSpawn = false
+
+local Toggle = Instance.new("TextButton")
+Toggle.Name = "NexusToggle"
+Toggle.Parent = ScreenGui
+Toggle.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+Toggle.Position = UDim2.new(0, 0, 0.454706937, 0)
+Toggle.Size = UDim2.new(0, 50, 0,50)
+Toggle.Font = Enum.Font.GothamBold
+Toggle.Text = "Nexus"
+Toggle.TextColor3 = Color3.fromRGB(248, 248, 248)
+Toggle.TextSize = 16.000
+Toggle.Draggable = true
+Toggle.MouseButton1Click:connect(function()
+    Library:ToggleUI()
+end)
+
+local Corner = Instance.new("UICorner")
+Corner.Name = "Corner"
+Corner.Parent = Toggle
+
+-- Stuff for changing the themes!
+local themes = {
+    Private = {
+        SchemeColor = Color3.fromRGB(255, 215, 0),
+        Background = Color3.fromRGB(31, 41, 43),
+        Header = Color3.fromRGB(22, 29, 31),
+        TextColor = Color3.fromRGB(255,255,255),
+        ElementColor = Color3.fromRGB(22, 29, 31)
+    },
+    DarkTheme = {
+        SchemeColor = Color3.fromRGB(64, 64, 64),
+        Background = Color3.fromRGB(0, 0, 0),
+        Header = Color3.fromRGB(0, 0, 0),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(20, 20, 20)
+    },
+    LightTheme = {
+        SchemeColor = Color3.fromRGB(150, 150, 150),
+        Background = Color3.fromRGB(255, 255, 255),
+        Header = Color3.fromRGB(200, 200, 200),
+        TextColor = Color3.fromRGB(0, 0, 0),
+        ElementColor = Color3.fromRGB(224, 224, 224)
+    },
+    BloodTheme = {
+        SchemeColor = Color3.fromRGB(227, 27, 27),
+        Background = Color3.fromRGB(10, 10, 10),
+        Header = Color3.fromRGB(5, 5, 5),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(20, 20, 20)
+    },
+    GrapeTheme = {
+        SchemeColor = Color3.fromRGB(166, 71, 214),
+        Background = Color3.fromRGB(64, 50, 71),
+        Header = Color3.fromRGB(36, 28, 41),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(74, 58, 84)
+    },
+    Ocean = {
+        SchemeColor = Color3.fromRGB(86, 76, 251),
+        Background = Color3.fromRGB(26, 32, 58),
+        Header = Color3.fromRGB(38, 45, 71),
+        TextColor = Color3.fromRGB(200, 200, 200),
+        ElementColor = Color3.fromRGB(38, 45, 71)
+    },
+    Sentinel = {
+        SchemeColor = Color3.fromRGB(230, 35, 69),
+        Background = Color3.fromRGB(32, 32, 32),
+        Header = Color3.fromRGB(24, 24, 24),
+        TextColor = Color3.fromRGB(119, 209, 138),
+        ElementColor = Color3.fromRGB(24, 24, 24)
+    },
+    Synapse = {
+        SchemeColor = Color3.fromRGB(46, 48, 43),
+        Background = Color3.fromRGB(13, 15, 12),
+        Header = Color3.fromRGB(36, 38, 35),
+        TextColor = Color3.fromRGB(152, 99, 53),
+        ElementColor = Color3.fromRGB(24, 24, 24)
+    },
+    Serpent = {
+        SchemeColor = Color3.fromRGB(0, 166, 58),
+        Background = Color3.fromRGB(31, 41, 43),
+        Header = Color3.fromRGB(22, 29, 31),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(22, 29, 31)
+    },
+
+    -- Custom themes added
+    Midnight = {
+        SchemeColor = Color3.fromRGB(0, 0, 50),
+        Background = Color3.fromRGB(15, 15, 15),
+        Header = Color3.fromRGB(0, 0, 40),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(30, 30, 30)
+    },
+    RoyalBlue = {
+        SchemeColor = Color3.fromRGB(65, 105, 225),
+        Background = Color3.fromRGB(25, 25, 112),
+        Header = Color3.fromRGB(0, 0, 255),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(30, 30, 105)
+    },
+    NeonPink = {
+        SchemeColor = Color3.fromRGB(255, 20, 147),
+        Background = Color3.fromRGB(255, 105, 180),
+        Header = Color3.fromRGB(255, 20, 147),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(255, 182, 193)
+    },
+    OceanBlue = {
+        SchemeColor = Color3.fromRGB(0, 102, 204),
+        Background = Color3.fromRGB(0, 51, 102),
+        Header = Color3.fromRGB(0, 76, 153),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(0, 51, 102)
+    },
+    SunsetOrange = {
+        SchemeColor = Color3.fromRGB(255, 69, 0),
+        Background = Color3.fromRGB(255, 94, 77),
+        Header = Color3.fromRGB(255, 69, 0),
+        TextColor = Color3.fromRGB(255, 255, 255),
+        ElementColor = Color3.fromRGB(255, 94, 77)
+    }
+}
+local ThemesSection = ThemesTab:NewSection("Select your theme")
+
+-- Function to apply the theme
+local function applyTheme(theme)
+    if themes[theme] then
+        Library:ChangeColor("SchemeColor", themes[theme].SchemeColor)
+        Library:ChangeColor("Background", themes[theme].Background)
+        Library:ChangeColor("Header", themes[theme].Header)
+        Library:ChangeColor("TextColor", themes[theme].TextColor)
+        Library:ChangeColor("ElementColor", themes[theme].ElementColor)
+    end
+end
+applyTheme(savedTheme)
+
+-- Load saved theme or default to the first one
+local savedTheme = loadTheme() or next(themes)  -- 'next' gets first key in table
+
+-- Create buttons for each theme
+for themeName, _ in pairs(themes) do
+    ThemesSection:NewButton(themeName, "Click to apply theme: " .. themeName, function()
+        applyTheme(themeName)
+        saveTheme(themeName)
+    end)
+end
