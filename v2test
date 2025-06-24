@@ -1,3 +1,8 @@
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local localPlayer = Players.LocalPlayer
+
 -- Universal Executor Detection
 local function getExecutorName()
     -- Priority to accurate built-in identifiers
@@ -54,10 +59,6 @@ end
 local executorName = getExecutorName()
 print("Executor detected:", executorName)
 
-local StarterGui = game:GetService("StarterGui")
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
 -- Notification helper
 local function notif(txt, dur)
     StarterGui:SetCore("SendNotification", {
@@ -71,27 +72,101 @@ local function flingPlayer(target)
         notif("Invalid target", 2)
         return
     end
-
     local character = target.Character
-    local rootPart = character:FindFirstChild("HumanoidRootPart") 
-                    or character:FindFirstChild("Torso") 
-                    or character:FindFirstChild("UpperTorso")
-
+    local rootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
     if not rootPart then
         notif("Could not find torso/root part", 2)
         return
     end
-
     local thrust = Instance.new("BodyThrust")
     thrust.Force = Vector3.new(0, 100000, 0)
     thrust.Location = rootPart.Position
     thrust.Parent = rootPart
-
     wait(0.5)
-
     thrust:Destroy()
     notif("Flinged " .. target.Name, 2)
 end
+local localPlayer = Players.LocalPlayer
+local espEnabled = false
+local espColor = Color3.new(1, 0, 0) -- red
+local espObjects = {}
+
+local function createESP(player)
+    if player == localPlayer or espObjects[player] then return end
+
+    local box = Drawing.new("Square")
+    box.Thickness = 2
+    box.Filled = false
+    box.Visible = false
+
+    local nameTag = Drawing.new("Text")
+    nameTag.Size = 16
+    nameTag.Center = true
+    nameTag.Outline = true
+    nameTag.Visible = false
+
+    espObjects[player] = {box = box, name = nameTag}
+end
+
+local function removeESP(player)
+    local esp = espObjects[player]
+    if esp then
+        esp.box:Remove()
+        esp.name:Remove()
+        espObjects[player] = nil
+    end
+end
+
+local function updateESP()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if espEnabled then
+            createESP(player)
+        else
+            removeESP(player)
+        end
+    end
+end
+
+RunService.RenderStepped:Connect(function()
+    if not espEnabled then return end
+
+    for player, esp in pairs(espObjects) do
+        local character = player.Character
+        local hrp = character and character:FindFirstChild("HumanoidRootPart")
+        if character and hrp then
+            local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
+            if onScreen then
+                local size = Vector2.new(50, 100)
+                esp.box.Size = size
+                esp.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
+                esp.box.Color = espColor
+                esp.box.Visible = true
+
+                esp.name.Text = player.Name
+                esp.name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
+                esp.name.Color = espColor
+                esp.name.Visible = true
+            else
+                esp.box.Visible = false
+                esp.name.Visible = false
+            end
+        else
+            esp.box.Visible = false
+            esp.name.Visible = false
+        end
+    end
+end)
+
+-- Player events to handle ESP when players join or leave
+Players.PlayerAdded:Connect(function(player)
+    player.CharacterAdded:Connect(function()
+        if espEnabled then
+            createESP(player)
+        end
+    end)
+end)
+
+Players.PlayerRemoving:Connect(removeESP)
 
 -- Load the library first with error handling
 local success, Library = pcall(function()
@@ -165,113 +240,6 @@ end)
 local Tab = Window:NewTab("Universal")
 local Section = Tab:NewSection("Universal")
 local ESpection = Tab:NewSection("ESP")
--- ✅ ENHANCED ESP SYSTEM
-local localPlayer = Players.LocalPlayer
-local espEnabled = false
-local espColor = Color3.new(1, 0, 0) -- default red
-local espObjects = {}
-
--- Drawings
-local Camera = workspace.CurrentCamera
-
--- Helper: Create ESP drawings
-local function createESP(player)
-    if player == localPlayer or espObjects[player] then return end
-
-    local box = Drawing.new("Square")
-    box.Thickness = 2
-    box.Filled = false
-    box.Visible = false
-
-    local nameTag = Drawing.new("Text")
-    nameTag.Size = 16
-    nameTag.Center = true
-    nameTag.Outline = true
-    nameTag.Visible = false
-
-    espObjects[player] = {box = box, name = nameTag}
-end
-
--- Remove ESP drawings
-local function removeESP(player)
-    local esp = espObjects[player]
-    if esp then
-        esp.box:Remove()
-        esp.name:Remove()
-        espObjects[player] = nil
-    end
-end
-
--- Toggle ESP for all
-local function updateESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if espEnabled then
-            createESP(player)
-        else
-            removeESP(player)
-        end
-    end
-end
-
--- Real-time ESP update
-RunService.RenderStepped:Connect(function()
-    if not espEnabled then return end
-
-    for player, esp in pairs(espObjects) do
-        local character = player.Character
-        local hrp = character and character:FindFirstChild("HumanoidRootPart")
-
-        if character and hrp then
-            local head = character:FindFirstChild("Head")
-            local torso = character:FindFirstChild("Torso") or character:FindFirstChild("UpperTorso")
-
-            if head and torso then
-                local pos, onScreen = Camera:WorldToViewportPoint(hrp.Position)
-
-                if onScreen then
-                    local rootPos = hrp.Position
-local headPos = head.Position
-local top, bottom = headPos.Y + 1, hrp.Position.Y - 2
-
-local width3D = 2 -- approximate width of avatar
-local top2D = Camera:WorldToViewportPoint(Vector3.new(rootPos.X, top, rootPos.Z))
-local bottom2D = Camera:WorldToViewportPoint(Vector3.new(rootPos.X, bottom, rootPos.Z))
-local height = math.abs(top2D.Y - bottom2D.Y)
-local width = height / 2 -- width is roughly half the height for Roblox avatars
-
-esp.box.Size = Vector2.new(width, height)
-esp.box.Position = Vector2.new(pos.X - width/2, pos.Y - height/2) -- Box size
-                    esp.box.Size = size
-                    esp.box.Position = Vector2.new(pos.X - size.X/2, pos.Y - size.Y/2)
-                    esp.box.Color = espColor
-                    esp.box.Visible = true
-
-                    esp.name.Text = player.DisplayName .. " (" .. player.Name .. ")"
-                    esp.name.Position = Vector2.new(pos.X, pos.Y - size.Y/2 - 15)
-                    esp.name.Color = espColor
-                    esp.name.Visible = true
-                else
-                    esp.box.Visible = false
-                    esp.name.Visible = false
-                end
-            end
-        else
-            esp.box.Visible = false
-            esp.name.Visible = false
-        end
-    end
-end)
-
--- Event handling
-Players.PlayerAdded:Connect(function(player)
-    player.CharacterAdded:Connect(function()
-        if espEnabled then
-            createESP(player)
-        end
-    end)
-end)
-
-Players.PlayerRemoving:Connect(removeESP)
 
 local FSection = Tab:NewSection("Fling")
 local selectedPlayer = nil
@@ -332,12 +300,17 @@ flingDropdown = FSection:NewDropdown("Select Player", "Pick a player to fling", 
 end)
 
 -- Buttons
-FSection:NewButton("Fling Selected Player", "Flings chosen player", function()
-    if not selectedPlayer then
-        notif("No player selected!", 2)
-        return
+FSection:NewButton("Fling Selected Player", "Fling the player you selected", function()
+    if selectedPlayerName then
+        local targetPlayer = Players:FindFirstChild(selectedPlayerName)
+        if targetPlayer then
+            flingPlayer(targetPlayer)
+        else
+            notif("Selected player not found.", 2)
+        end
+    else
+        notif("No player selected.", 2)
     end
-    flingPlayer(selectedPlayer)
 end)
 
 FSection:NewButton("Fling Random Player", "Flings a random player", function()
